@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Routing System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Routing System</h1>
+    <form id="routeForm">
+        <label for="origin">Origin:</label>
+        <input type="text" id="origin" name="origin" required>
+        <br>
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination" required>
+        <br>
+        <label for="vehicleType">Vehicle Type:</label>
+        <select id="vehicleType" name="vehicleType" required>
+            <option value="car">Car</option>
+            <option value="truck">Truck</option>
+            <option value="bike">Bike</option>
+            <option value="bus">Bus</option>
+            <option value="motorcycle">Motorcycle</option>
+        </select>
+        <br>
+        <button type="submit">Find Route</button>
+    </form>
+    <h2>Results:</h2>
+    <p id="routeDetails"></p>
+    <div id="map"></div>
+
+    <script>
+        const form = document.getElementById('routeForm');
+        const routeDetails = document.getElementById('routeDetails');
+        const map = L.map('map').setView([0, 0], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const vehicleType = document.getElementById('vehicleType').value;
+
+            try {
+                const response = await fetch('/route', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `origin=${origin}&destination=${destination}&vehicleType=${vehicleType}`
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const route = data.route;
+                    routeDetails.innerHTML = `
+                        Distance: ${route.distance.toFixed(2)} km<br>
+                        Travel Time: ${route.travel_time.toFixed(2)} minutes<br>
+                        Estimated Emissions: ${data.emissions.toFixed(2)} g CO2
+                    `;
+
+                    map.eachLayer((layer) => {
+                        if (!layer._url) {
+                            map.removeLayer(layer);
+                        }
+                    });
+
+                    const polyline = L.polyline(route.polyline, { color: 'blue' }).addTo(map);
+                    map.fitBounds(polyline.getBounds());
+                } else {
+                    routeDetails.textContent = `Error: ${data.error}`;
+                }
+            } catch (err) {
+                routeDetails.textContent = `Error: ${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
