@@ -1,0 +1,84 @@
+from flask import Flask, render_template, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+TOMTOM_API_KEY = "iJBGQTY63pPtNSZ7AlJHpV2VE2AI6Pa4"
+
+def get_coordinates(location, tomtom_api_key):
+    """Fetch the GPS coordinates for a given location using TomTom Search API."""
+    url = f"https://api.tomtom.com/search/2/geocode/{location}.json?key={tomtom_api_key}"
+    response = requests.get(url)
+    data = response.json()
+    if response.status_code == 200 and data['results']:
+        position = data['results'][0]['position']
+        return position['lat'], position['lon']
+    else:
+        raise Exception("Unable to fetch coordinates. Check your input or API key.")
+
+def get_route(origin, destination, tomtom_api_key):
+    """Fetch shortest route using TomTom Routing API."""
+    url = (f"https://api.tomtom.com/routing/1/calculateRoute/{origin[0]},{origin[1]}:" 
+           f"{destination[0]},{destination[1]}/json?routeType=shortest&traffic=true&key={tomtom_api_key}")
+    response = requests.get(url)
+    data = response.json()
+    if response.status_code == 200:
+        routes = data.get('routes', [])
+        if routes:
+            route_points = routes[0]['legs'][0]['points']
+            polyline = [[point['latitude'], point['longitude']] for point in route_points]
+            summary = routes[0]['summary']
+            return {
+                "distance": summary['lengthInMeters'] / 1000,
+                "travel_time": summary['travelTimeInSeconds'] / 60,
+                "polyline": polyline
+            }
+    else:
+        raise Exception("Unable to fetch route data. Check your API key.")
+
+def calculate_emissions(distance, vehicle_type):
+    """Estimate emissions based on distance and vehicle type."""
+    # Emission factors in grams of CO2 per km
+    emission_factors = {
+        "car": 120,
+        "truck": 250,
+        "bike": 0,
+        "bus": 80,
+        "motorcycle": 90
+    }
+    return distance * emission_factors.get(vehicle_type, 120)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/route", methods=["POST"])
+def route():
+    try:
+        origin = request.form["origin"]
+        destination = request.form["destination"]
+        vehicle_type = request.form["vehicleType"]
+
+        # Fetch coordinates for origin and destination
+        origin_coords = get_coordinates(origin, TOMTOM_API_KEY)
+        destination_coords = get_coordinates(destination, TOMTOM_API_KEY)
+
+        # Fetch shortest route data
+        route_data = get_route(origin_coords, destination_coords, TOMTOM_API_KEY)
+
+        # Calculate emissions
+        emissions = calculate_emissions(route_data["distance"], vehicle_type)
+
+        return jsonify({
+            "success": True,
+            "route": route_data,
+            "emissions": emissions
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
+if __name__ == "__main__":
+    app.run(debug=True)
