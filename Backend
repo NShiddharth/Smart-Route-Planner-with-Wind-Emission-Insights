@@ -4,6 +4,7 @@ import requests
 app = Flask(__name__)
 
 TOMTOM_API_KEY = "iJBGQTY63pPtNSZ7AlJHpV2VE2AI6Pa4"
+OPEN_METEO_API_URL = "https://api.open-meteo.com/v1/forecast"
 
 def get_coordinates(location, tomtom_api_key):
     """Fetch the GPS coordinates for a given location using TomTom Search API."""
@@ -17,36 +18,52 @@ def get_coordinates(location, tomtom_api_key):
         raise Exception("Unable to fetch coordinates. Check your input or API key.")
 
 def get_route(origin, destination, tomtom_api_key):
-    """Fetch shortest route using TomTom Routing API."""
-    url = (f"https://api.tomtom.com/routing/1/calculateRoute/{origin[0]},{origin[1]}:" 
-           f"{destination[0]},{destination[1]}/json?routeType=shortest&traffic=true&key={tomtom_api_key}")
+    """Fetch the optimal route using TomTom Routing API."""
+    url = (f"https://api.tomtom.com/routing/1/calculateRoute/{origin[0]},{origin[1]}:"
+           f"{destination[0]},{destination[1]}/json?routeType=fastest&traffic=true&key={tomtom_api_key}")
     response = requests.get(url)
     data = response.json()
     if response.status_code == 200:
         routes = data.get('routes', [])
-        if routes:
-            route_points = routes[0]['legs'][0]['points']
+        route_data = []
+        for route in routes:
+            route_points = route['legs'][0]['points']
             polyline = [[point['latitude'], point['longitude']] for point in route_points]
-            summary = routes[0]['summary']
-            return {
+            summary = route['summary']
+            route_data.append({
                 "distance": summary['lengthInMeters'] / 1000,
                 "travel_time": summary['travelTimeInSeconds'] / 60,
                 "polyline": polyline
-            }
+            })
+        return route_data
     else:
         raise Exception("Unable to fetch route data. Check your API key.")
 
 def calculate_emissions(distance, vehicle_type):
     """Estimate emissions based on distance and vehicle type."""
-    # Emission factors in grams of CO2 per km
     emission_factors = {
-        "car": 120,
+        "car": 120,  # Default CO2 per km (grams)
         "truck": 250,
         "bike": 0,
         "bus": 80,
         "motorcycle": 90
     }
     return distance * emission_factors.get(vehicle_type, 120)
+
+def get_wind_speed(lat, lon):
+    """Fetch wind speed at a given location using Open-Meteo API."""
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current_weather": True
+    }
+    response = requests.get(OPEN_METEO_API_URL, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        wind_speed = data.get("current_weather", {}).get("windspeed", "N/A")
+        return wind_speed
+    else:
+        raise Exception("Unable to fetch wind speed. Check the API request.")
 
 @app.route("/")
 def home():
@@ -63,16 +80,17 @@ def route():
         origin_coords = get_coordinates(origin, TOMTOM_API_KEY)
         destination_coords = get_coordinates(destination, TOMTOM_API_KEY)
 
-        # Fetch shortest route data
+        # Fetch optimal route
         route_data = get_route(origin_coords, destination_coords, TOMTOM_API_KEY)
 
-        # Calculate emissions
-        emissions = calculate_emissions(route_data["distance"], vehicle_type)
+        # Add emissions and wind speed data for each route
+        for route in route_data:
+            route["emissions"] = calculate_emissions(route["distance"], vehicle_type)
+            route["wind_speed"] = get_wind_speed(destination_coords[0], destination_coords[1])
 
         return jsonify({
             "success": True,
-            "route": route_data,
-            "emissions": emissions
+            "routes": route_data
         })
     except Exception as e:
         return jsonify({
