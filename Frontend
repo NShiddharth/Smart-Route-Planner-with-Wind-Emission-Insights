@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Routing System</title>
+    <title>Dynamic Routing with Wind Speed</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <h1>Dynamic Routing System</h1>
+    <h1>Dynamic Routing with Wind Speed</h1>
     <form id="routeForm">
         <label for="origin">Origin:</label>
         <input type="text" id="origin" name="origin" required>
@@ -65,21 +65,26 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    const route = data.route;
-                    routeDetails.innerHTML = `
-                        Distance: ${route.distance.toFixed(2)} km<br>
-                        Travel Time: ${route.travel_time.toFixed(2)} minutes<br>
-                        Estimated Emissions: ${data.emissions.toFixed(2)} g CO2
-                    `;
-
+                    let resultHtml = "";
                     map.eachLayer((layer) => {
                         if (!layer._url) {
                             map.removeLayer(layer);
                         }
                     });
 
-                    const polyline = L.polyline(route.polyline, { color: 'blue' }).addTo(map);
-                    map.fitBounds(polyline.getBounds());
+                    data.routes.forEach((route, index) => {
+                        const polyline = L.polyline(route.polyline, { color: 'blue' }).addTo(map);
+                        map.fitBounds(polyline.getBounds());
+                        resultHtml += `
+                            <strong>Route ${index + 1}:</strong><br>
+                            Distance: ${route.distance.toFixed(2)} km<br>
+                            Travel Time: ${route.travel_time.toFixed(2)} minutes<br>
+                            Estimated Emissions: ${route.emissions.toFixed(2)} g CO2<br>
+                            Wind Speed: ${route.wind_speed} m/s<br><br>
+                        `;
+                    });
+
+                    routeDetails.innerHTML = resultHtml;
                 } else {
                     routeDetails.textContent = `Error: ${data.error}`;
                 }
