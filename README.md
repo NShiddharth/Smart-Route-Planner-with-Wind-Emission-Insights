@@ -390,17 +390,3 @@ Potential improvements include:
 7. **Secure API Configuration:** Improve credential management through environment variables and centralized configuration.
 
 ---
-
-## 👨‍💻 Author
-
-**N Shiddharth**
-
-GitHub: [@NShiddharth](https://github.com/NShiddharth)
-
-Project Repository: [Smart Route Planner with Wind & Emission Insights](https://github.com/NShiddharth/Smart-Route-Planner-with-Wind-Emission-Insights)
-
----
-
-<p align="center">
-  <strong>Building smarter journeys with route intelligence and environmental awareness. 🌍</strong>
-</p>
