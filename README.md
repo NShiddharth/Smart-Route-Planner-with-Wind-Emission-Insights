@@ -485,19 +485,3 @@ The following features can extend the current implementation:
 - [OpenStreetMap](https://www.openstreetmap.org/)
 
 ---
-
-## 👨‍💻 Author
-
-**N Shiddharth**
-
-GitHub: [@NShiddharth](https://github.com/NShiddharth)
-
-Project Repository:
-
-[Smart Route Planner with Wind & Emission Insights](https://github.com/NShiddharth/Smart-Route-Planner-with-Wind-Emission-Insights)
-
----
-
-<p align="center">
-  <strong>🌍 Making journeys smarter through route intelligence and environmental awareness.</strong>
-</p>
