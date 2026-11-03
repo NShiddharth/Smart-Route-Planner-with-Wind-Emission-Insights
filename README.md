@@ -418,39 +418,45 @@ bike
 
 ---
 
-## 🔬 Environmental Calculation Methodology
+🔬 Environmental Calculation Methodology
 
-The project incorporates a straightforward vehicle-based emission estimation approach.
+The project incorporates a vehicle-based emission estimation approach using route distance and predefined vehicle-specific emission factors.
 
-### Distance-Based Emission Estimation
+1. Distance-Based Emission Estimation
 
 The route distance obtained from the TomTom Routing API is converted into kilometres.
 
-The selected vehicle category determines the emission factor.
+The selected vehicle category determines the corresponding emission factor.
 
-The application calculates:
+Mathematical Representation:
 
-\[
-\text{CO}_2 = \text{Distance} \times \text{Emission Factor}
-\]
+$$
+\boxed{\text{CO}_2 = \text{Distance} \times \text{Emission Factor}}
+$$
 
-For example, considering a hypothetical 10.5 km journey using the configured car emission factor:
+Example Calculation:
 
-\[
-10.5 \times 120 = 1260 \text{ g CO}_2
-\]
+Consider a hypothetical journey of 10.5 km using a car with an emission factor of 120 g/km.
 
-The resulting value represents an estimated carbon emission for the journey.
+$$
+\text{CO}_2 = 10.5 \times 120
+$$
 
-### Wind-Speed Retrieval
+$$
+\boxed{\text{CO}_2 = 1260 \text{ grams}}
+$$
 
-The destination coordinates are passed to Open-Meteo.
+Therefore, the estimated carbon emission for this journey is 1,260 grams (1.26 kg) of CO₂.
+
+The resulting value represents an estimated carbon emission based on the configured vehicle emission factor.
+
+2. Wind-Speed Retrieval
+
+The destination coordinates are passed to the Open-Meteo Weather API.
 
 The weather API returns the current wind-speed information associated with the destination.
 
-**Important:** Wind speed is currently retrieved at the destination only. It is not used as a routing optimization parameter.
-
----
+Important: Wind speed is currently retrieved at the destination only. It is not used as a routing optimization parameter.
 
 ## ⚠️ Limitations & Technical Considerations
 
