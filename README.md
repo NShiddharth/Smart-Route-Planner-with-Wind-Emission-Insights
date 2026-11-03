@@ -67,17 +67,21 @@ The system accepts origin and destination locations, identifies their geographic
 - Applies different emission factors according to the selected vehicle.
 - Provides an estimated carbon footprint for the calculated route.
 
-**Emission Calculation Formula:**
+Emission Calculation Formula:
 
-\[
-E = D \times F_v
-\]
+The estimated CO₂ emission is calculated using:
+
+$$
+\boxed{E = D \times F_v}
+$$
 
 Where:
 
-- \(E\) = Estimated CO₂ emissions (grams)
-- \(D\) = Route distance (kilometres)
-- \(F_v\) = Vehicle-specific emission factor (grams/km)
+$E$ = Estimated CO₂ emissions (grams)
+
+$D$ = Route distance (kilometres)
+
+$F_v$ = Vehicle-specific emission factor (grams/km)
 
 **Configured Vehicle Emission Factors:**
 
